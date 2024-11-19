@@ -76,14 +76,14 @@ const CatalogoCompras = () => {
   const handleCompra = () => {
     if (cart.length > 0) {
       alert('Compra realizada con éxito');
-      setCart([]); // Clear the cart after purchase
+      setCart([]); 
     } else {
       alert('No tienes productos en el carrito');
     }
   };
 
   const handleClearCart = () => {
-    setCart([]); // Clear the cart
+    setCart([]); 
   };
 
   const cartItemCount = cart.length;
