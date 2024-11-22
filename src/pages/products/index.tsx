@@ -1,3 +1,4 @@
+import ShoppingCart from "@/components/Cart";
 import {
   addItemToCart,
   getProductsOnCart,
@@ -5,22 +6,24 @@ import {
 } from "@/context";
 import { getProducts } from "@/services/api/products";
 import { CartItem, Product } from "@/types";
+import { getTotalAmountCart } from "@/utils";
+import { GetServerSideProps } from "next";
 
 import { FC, useEffect, useState } from "react";
 
-const Products: FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+interface Props {
+  products: Product[];
+}
+
+const Products: FC<Props> = ({ products }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [totalAmount, setTotalAmount] = useState<string>("0");
 
   const getCart = () => {
     const contextCart = getProductsOnCart();
     setCart(contextCart);
-  };
-
-  const fetchProducts = async () => {
-    const apiProducts = await getProducts();
-
-    setProducts(apiProducts);
+    const total = getTotalAmountCart(contextCart);
+    setTotalAmount(total);
   };
 
   const addToCart = (product: Product) => {
@@ -35,40 +38,83 @@ const Products: FC = () => {
 
   useEffect(() => {
     getCart();
-    fetchProducts();
   }, []);
 
   return (
     <>
-      <h1>CART</h1>
-      {cart.map((item) => (
-        <li key={item.id}>
-          <p>{item.id}</p>
-          <p>{item.title}</p>
-          <p>{item.price}</p>
-          <h1>TOTAL: {item.quantity}</h1>
-          <button onClick={() => removeItem(item.id)}>Remove from Cart</button>
-        </li>
-      ))}
+      <ShoppingCart
+        cart={cart}
+        totalAmount={totalAmount}
+        removeItem={removeItem}
+      />
+      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
+        <h1 style={{ textAlign: "center", marginBottom: "20px" }}>
+          Shopping Cart
+        </h1>
 
-      <h2>Products</h2>
-      {products.map((product) => (
-        <li key={product.id}>
-          <picture>
-            <img
-              src={product.image}
-              style={{ width: "100px", height: "50px" }}
-              alt="Picture of the author"
-            />
-          </picture>
-          <p>{product.id}</p>
-          <p>{product.title}</p>
-          <p>$ {product.price}</p>
-          <button onClick={() => addToCart(product)}>Add to Cart</button>
-        </li>
-      ))}
+        <section>
+          <h2>Products</h2>
+          <ul
+            style={{
+              listStyleType: "none",
+              padding: 0,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "20px",
+            }}
+          >
+            {products.map((product) => (
+              <li
+                key={product.id}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "10px",
+                  border: "1px solid black",
+                  borderRadius: "5px",
+                }}
+              >
+                <img
+                  src={product.image}
+                  style={{
+                    width: "150px",
+                    height: "100px",
+                    objectFit: "cover",
+                  }}
+                  alt={product.title}
+                />
+                <h4 style={{ textAlign: "center" }}>{product.title}</h4>
+                <p style={{ fontWeight: "bold" }}>Price: ${product.price}</p>
+                <button
+                  onClick={() => addToCart(product)}
+                  style={{
+                    background: "green",
+                    color: "white",
+                    borderRadius: "5px",
+                    padding: "10px 15px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Add to Cart
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const apiProducts = await getProducts();
+
+  return {
+    props: {
+      products: apiProducts,
+    },
+  };
 };
 
 export default Products;
