@@ -1,42 +1,53 @@
-import { getCart, setCart } from "@/services/localStorage";
+import { create } from "zustand";
+
+import { createJSONStorage, persist } from "zustand/middleware";
 import { CartItem, Product } from "@/types";
 
-let cart: Record<string, CartItem> = {};
-
-export function addItemToCart(item: Product) {
-  if (!item || !Object.keys(item).length) return;
-
-  if (!Object.keys(cart).length) {
-    cart = getCart();
-  }
-
-  const exist = cart[item.id];
-  if (!exist) {
-    cart[item.id] = {
-      ...item,
-      quantity: 1,
-    };
-    return;
-  }
-  cart[item.id].quantity += 1;
-  setCart(cart);
+interface CartState {
+  cart: Record<string, CartItem>;
+  addItemToCart: (item: Product) => void;
+  getProductsOnCart: () => CartItem[];
+  removeItemFromCart: (itemId: number) => void;
 }
 
-export function getProductsOnCart() {
-  if (!Object.keys(cart).length) {
-    cart = getCart();
-  }
-  return Object.values(cart).map((product) => product);
-}
+const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      cart: {},
+      addItemToCart: (item: Product) => {
+        if (!item || !Object.keys(item).length) return;
 
-export function removeItemFromCart(itemId: number) {
-  const exist = cart[itemId];
+        const cart = { ...get().cart };
+        if (!cart[item.id]) {
+          cart[item.id] = { ...item, quantity: 1 };
+        } else {
+          cart[item.id].quantity += 1;
+        }
+        set({ cart });
+      },
+      getProductsOnCart: () => {
+        const cart = get().cart;
+        return Object.values(cart);
+      },
+      removeItemFromCart: (itemId: number) => {
+        const cart = { ...get().cart };
+        const exist = cart[itemId];
 
-  if (exist.quantity <= 1) {
-    delete cart[itemId];
-  } else {
-    cart[itemId].quantity -= 1;
-  }
+        if (!exist) return;
 
-  setCart(cart);
-}
+        if (exist.quantity <= 1) {
+          delete cart[itemId];
+        } else {
+          cart[itemId].quantity -= 1;
+        }
+        set({ cart });
+      },
+    }),
+    {
+      name: "cart",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
+
+export default useCartStore;

@@ -1,9 +1,5 @@
 import ShoppingCart from "@/components/Cart";
-import {
-  addItemToCart,
-  getProductsOnCart,
-  removeItemFromCart,
-} from "@/context";
+import useCartStore from "@/context";
 import { getProducts } from "@/services/api/products";
 import { CartItem, Product } from "@/types";
 import { getTotalAmountCart } from "@/utils";
@@ -16,6 +12,8 @@ interface Props {
 }
 
 const Products: FC<Props> = ({ products }) => {
+  const { getProductsOnCart, addItemToCart, removeItemFromCart } =
+    useCartStore();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<string>("0");
 
